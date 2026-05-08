@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${editMode} ? 'Edit Book — BookNook' : 'New Book — BookNook'">Form — BookNook</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #f4ede0; --surface: #fcfaf3; --surface-2: #efe6d4;
+            --border: #d4c5a8; --accent: #5d7052; --accent-hover: #4a5a42;
+            --accent-soft: #8ba384; --rose: #b88a8a; --ink: #2a3027;
+            --text-muted: #6b6557; --danger: #a83232; --gold: #b8946a;
+        }
+        body { background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+        a { color: var(--accent); text-decoration: none; }
+        .navbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; height: 64px; box-shadow: 0 1px 3px rgba(45,55,40,0.05); }
+        .navbar-brand { display: flex; align-items: center; gap: 0.7rem; font-size: 1.4rem; font-weight: 700; color: var(--ink); letter-spacing: -0.5px; font-family: 'Georgia', serif; font-style: italic; }
+        .navbar-brand .accent { color: var(--accent); }
+        .brand-icon { width: 38px; height: 38px; background: linear-gradient(135deg, var(--accent) 0%, var(--accent-soft) 100%); border-radius: 4px; display: flex; align-items: center; justify-content: center; transform: rotate(-3deg); }
+        .brand-icon svg { width: 22px; height: 22px; fill: var(--surface); }
+
+        .btn { display: inline-flex; align-items: center; padding: 0.55rem 1.1rem; border-radius: 4px; border: 1px solid transparent; font-size: 0.875rem; font-weight: 700; cursor: pointer; transition: all 0.15s; text-decoration: none; }
+        .btn-primary { background: var(--accent); color: var(--surface); }
+        .btn-primary:hover { background: var(--accent-hover); color: var(--surface); }
+        .btn-outline { background: transparent; color: var(--ink); border-color: var(--border); }
+        .btn-outline:hover { background: var(--surface-2); color: var(--accent); border-color: var(--accent); }
+
+        .main { max-width: 760px; margin: 0 auto; padding: 2rem 1.5rem; }
+        .breadcrumb { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; font-weight: 500; }
+        .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 2rem; box-shadow: 0 4px 12px rgba(45,55,40,0.06); }
+        .form-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; letter-spacing: -0.5px; font-family: 'Georgia', serif; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .fg { display: flex; flex-direction: column; gap: 0.4rem; }
+        .fg.full { grid-column: 1 / -1; }
+        .fg label { font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; }
+        .required::after { content: ' *'; color: var(--accent); }
+        .form-control, .form-select { background: var(--surface-2); border: 1.5px solid var(--border); color: var(--ink); padding: 0.6rem 0.85rem; border-radius: 4px; font-size: 0.9rem; appearance: none; width: 100%; transition: all 0.15s; }
+        .form-control:focus, .form-select:focus { outline: none; border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 3px rgba(93,112,82,0.08); }
+        .form-control::placeholder { color: #aaa090; }
+        textarea.form-control { resize: vertical; min-height: 100px; font-family: inherit; }
+        .field-error { color: var(--danger); font-size: 0.78rem; }
+        .section-label { grid-column: 1 / -1; font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; padding-top: 0.5rem; border-top: 1px solid var(--border); }
+
+        .checkbox-group { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; }
+        .checkbox-wrap { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0.95rem; background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; transition: all 0.15s; }
+        .checkbox-wrap:hover { border-color: var(--accent); }
+        .checkbox-wrap input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+        .checkbox-label { display: flex; flex-direction: column; cursor: pointer; flex: 1; }
+        .checkbox-title { font-size: 0.85rem; font-weight: 700; color: var(--ink); }
+
+        .form-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.75rem; padding-top: 1.25rem; border-top: 1px solid var(--border); }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <a class="navbar-brand" th:href="@{/books}">
+        <span class="brand-icon"><svg viewBox="0 0 24 24"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg></span>
+        <span><span class="accent">Book</span>Nook</span>
+    </a>
+</nav>
+
+<div class="main">
+    <div class="breadcrumb">
+        <a th:href="@{/books}">My Library</a> /
+        <span th:text="${editMode} ? 'Edit book' : 'New book'"></span>
+    </div>
+
+    <div class="form-card">
+        <h2 class="form-title" th:text="${editMode} ? 'Edit Book' : 'Add a New Book'"></h2>
+
+        <form th:action="${editMode} ? @{/books/edit/{id}(id=${book.id})} : @{/books/new}"
+              method="post" th:object="${book}">
+
+            <div class="form-grid">
+
+                <div class="section-label">Identification</div>
+
+                <div class="fg full">
+                    <label class="required">Title</label>
+                    <input class="form-control" type="text" th:field="*{title}" placeholder="e.g. The Seven Husbands of Evelyn Hugo">
+                    <span class="field-error" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></span>
+                </div>
+
+                <div class="fg">
+                    <label class="required">Author</label>
+                    <input class="form-control" type="text" th:field="*{author}" placeholder="e.g. Taylor Jenkins Reid">
+                    <span class="field-error" th:if="${#fields.hasErrors('author')}" th:errors="*{author}"></span>
+                </div>
+
+                <div class="fg">
+                    <label>Publisher</label>
+                    <input class="form-control" type="text" th:field="*{publisher}" placeholder="e.g. Atria Books">
+                </div>
+
+                <div class="fg">
+                    <label>Series Name</label>
+                    <input class="form-control" type="text" th:field="*{seriesName}" placeholder="e.g. Throne of Glass">
+                </div>
+
+                <div class="fg">
+                    <label>Series Number</label>
+                    <input class="form-control" type="number" th:field="*{seriesNumber}" min="0" max="50" placeholder="e.g. 1">
+                    <span class="field-error" th:if="${#fields.hasErrors('seriesNumber')}" th:errors="*{seriesNumber}"></span>
+                </div>
+
+                <div class="fg">
+                    <label>Publication Year</label>
+                    <input class="form-control" type="number" th:field="*{publicationYear}" min="1000" max="2100" placeholder="e.g. 2017">
+                    <span class="field-error" th:if="${#fields.hasErrors('publicationYear')}" th:errors="*{publicationYear}"></span>
+                </div>
+
+                <div class="fg">
+                    <label>ISBN</label>
+                    <input class="form-control" type="text" th:field="*{isbn}" placeholder="e.g. 978-1501161933">
+                </div>
+
+                <div class="section-label">Categorization</div>
+
+                <div class="fg">
+                    <label class="required">Genre</label>
+                    <select class="form-select" th:field="*{genre}">
+                        <option value="">Select genre...</option>
+                        <option th:each="g : ${genres}" th:value="${g}"
+                                th:text="${#strings.replace(g.name(),'_',' ')}"></option>
+                    </select>
+                    <span class="field-error" th:if="${#fields.hasErrors('genre')}" th:errors="*{genre}"></span>
+                </div>
+
+                <div class="fg">
+                    <label class="required">Format</label>
+                    <select class="form-select" th:field="*{format}">
+                        <option value="">Select format...</option>
+                        <option th:each="f : ${formats}" th:value="${f}"
+                                th:text="${#strings.replace(f.name(),'_',' ')}"></option>
+                    </select>
+                    <span class="field-error" th:if="${#fields.hasErrors('format')}" th:errors="*{format}"></span>
+                </div>
+
+                <div class="fg">
+                    <label class="required">Reading Status</label>
+                    <select class="form-select" th:field="*{status}">
+                        <option value="">Select status...</option>
+                        <option th:each="s : ${statuses}" th:value="${s}"
+                                th:text="${#strings.replace(s.name(),'_',' ')}"></option>
+                    </select>
+                    <span class="field-error" th:if="${#fields.hasErrors('status')}" th:errors="*{status}"></span>
+                </div>
+
+                <div class="fg">
+                    <label>Rating (1-5 stars)</label>
+                    <input class="form-control" type="number" th:field="*{rating}" min="1" max="5" placeholder="1-5">
+                    <span class="field-error" th:if="${#fields.hasErrors('rating')}" th:errors="*{rating}"></span>
+                </div>
+
+                <div class="section-label">Reading Progress</div>
+
+                <div class="fg">
+                    <label>Total Pages</label>
+                    <input class="form-control" type="number" th:field="*{pageCount}" min="1" max="10000" placeholder="e.g. 400">
+                    <span class="field-error" th:if="${#fields.hasErrors('pageCount')}" th:errors="*{pageCount}"></span>
+                </div>
+
+                <div class="fg">
+                    <label>Current Page</label>
+                    <input class="form-control" type="number" th:field="*{currentPage}" min="0" max="10000" placeholder="e.g. 127">
+                    <span class="field-error" th:if="${#fields.hasErrors('currentPage')}" th:errors="*{currentPage}"></span>
+                </div>
+
+                <div class="fg">
+                    <label>Started Reading</label>
+                    <input class="form-control" type="date" th:field="*{startedReading}">
+                </div>
+
+                <div class="fg">
+                    <label>Finished Reading</label>
+                    <input class="form-control" type="date" th:field="*{finishedReading}">
+                </div>
+
+                <div class="checkbox-group">
+                    <label class="checkbox-wrap" for="ownedCopy">
+                        <input id="ownedCopy" type="checkbox" th:field="*{ownedCopy}">
+                        <span class="checkbox-label"><span class="checkbox-title">📕 Owned copy</span></span>
+                    </label>
+                    <label class="checkbox-wrap" for="partOfChallenge">
+                        <input id="partOfChallenge" type="checkbox" th:field="*{partOfChallenge}">
+                        <span class="checkbox-label"><span class="checkbox-title">📚 Yearly challenge</span></span>
+                    </label>
+                    <label class="checkbox-wrap" for="reReadable">
+                        <input id="reReadable" type="checkbox" th:field="*{reReadable}">
+                        <span class="checkbox-label"><span class="checkbox-title">♡ Re-readable</span></span>
+                    </label>
+                </div>
+
+                <div class="section-label">Reading Journal</div>
+
+                <div class="fg full">
+                    <label>Mood / Atmosphere</label>
+                    <input class="form-control" type="text" th:field="*{moodAtmosphere}" placeholder="e.g. Cozy autumn vibes, dark academia">
+                    <span class="field-error" th:if="${#fields.hasErrors('moodAtmosphere')}" th:errors="*{moodAtmosphere}"></span>
+                </div>
+
+                <div class="fg full">
+                    <label>Trigger Warnings</label>
+                    <input class="form-control" type="text" th:field="*{triggerWarnings}" placeholder="e.g. Death, abuse, violence">
+                    <span class="field-error" th:if="${#fields.hasErrors('triggerWarnings')}" th:errors="*{triggerWarnings}"></span>
+                </div>
+
+                <div class="fg full">
+                    <label>Favorite Quote</label>
+                    <textarea class="form-control" th:field="*{favoriteQuote}" placeholder="A passage that stuck with you..." style="min-height: 70px;"></textarea>
+                    <span class="field-error" th:if="${#fields.hasErrors('favoriteQuote')}" th:errors="*{favoriteQuote}"></span>
+                </div>
+
+                <div class="fg full">
+                    <label>My Review</label>
+                    <textarea class="form-control" th:field="*{review}" placeholder="What did you think? How did it make you feel?"></textarea>
+                </div>
+
+                <div class="fg full">
+                    <label>Personal Notes</label>
+                    <textarea class="form-control" th:field="*{personalNotes}" placeholder="Annotations, thoughts, theories, things to remember..."></textarea>
+                </div>
+
+            </div>
+
+            <div class="form-actions">
+                <a th:href="@{/books}" class="btn btn-outline">Cancel</a>
+                <button type="submit" class="btn btn-primary"
+                        th:text="${editMode} ? 'Save changes' : 'Add to Library'"></button>
+            </div>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>

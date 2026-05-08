@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Library — BookNook</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #f4ede0; --surface: #fcfaf3; --surface-2: #efe6d4;
+            --border: #d4c5a8; --accent: #5d7052; --accent-hover: #4a5a42;
+            --accent-soft: #8ba384; --rose: #b88a8a; --rose-soft: #d9b3b3;
+            --ink: #2a3027; --text-muted: #6b6557;
+            --success: #5d7052; --danger: #a83232; --gold: #b8946a;
+            --warning: #c8841f;
+        }
+        body { background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+        a { color: var(--accent); text-decoration: none; }
+
+        .navbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 64px; position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 3px rgba(45,55,40,0.05); }
+        .navbar-brand { display: flex; align-items: center; gap: 0.7rem; font-size: 1.4rem; font-weight: 700; color: var(--ink); letter-spacing: -0.5px; font-family: 'Georgia', serif; font-style: italic; }
+        .navbar-brand .accent { color: var(--accent); }
+        .brand-icon { width: 38px; height: 38px; background: linear-gradient(135deg, var(--accent) 0%, var(--accent-soft) 100%); border-radius: 4px; display: flex; align-items: center; justify-content: center; transform: rotate(-3deg); }
+        .brand-icon svg { width: 22px; height: 22px; fill: var(--surface); }
+        .navbar-nav { display: flex; align-items: center; gap: 1.5rem; list-style: none; }
+        .navbar-nav a { color: var(--text-muted); font-size: 0.9rem; font-weight: 600; }
+        .navbar-nav a:hover { color: var(--accent); }
+        .user-badge { background: var(--surface-2); border: 1px solid var(--border); border-radius: 20px; padding: 0.25rem 0.85rem; font-size: 0.8rem; color: var(--text-muted); font-weight: 600; }
+
+        .btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.55rem 1.1rem; border-radius: 4px; border: 1px solid transparent; font-size: 0.875rem; font-weight: 700; cursor: pointer; transition: all 0.15s; text-decoration: none; }
+        .btn-primary { background: var(--accent); color: var(--surface); }
+        .btn-primary:hover { background: var(--accent-hover); color: var(--surface); }
+        .btn-outline { background: transparent; color: var(--ink); border-color: var(--border); }
+        .btn-outline:hover { background: var(--surface-2); border-color: var(--accent); color: var(--accent); }
+        .btn-sm { padding: 0.32rem 0.75rem; font-size: 0.8rem; }
+        .btn-danger-sm { background: transparent; color: var(--danger); border: 1px solid var(--danger); border-radius: 4px; padding: 0.32rem 0.75rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+        .btn-danger-sm:hover { background: var(--danger); color: var(--surface); }
+
+        .main { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+        .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.75rem; }
+        .page-title { font-size: 1.8rem; font-weight: 700; letter-spacing: -0.5px; font-family: 'Georgia', serif; }
+        .page-title .accent { color: var(--accent); font-style: italic; }
+
+        .search-bar { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.1rem 1.3rem; margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end; box-shadow: 0 1px 3px rgba(45,55,40,0.04); }
+        .sg { display: flex; flex-direction: column; gap: 0.35rem; flex: 1; min-width: 140px; }
+        .sg label { font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; }
+        .form-control, .form-select { background: var(--surface-2); border: 1.5px solid var(--border); color: var(--ink); padding: 0.55rem 0.8rem; border-radius: 4px; font-size: 0.9rem; appearance: none; width: 100%; transition: all 0.15s; }
+        .form-control:focus, .form-select:focus { outline: none; border-color: var(--accent); background: var(--surface); }
+        .form-control::placeholder { color: #aaa090; }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 1.2rem; }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: all 0.2s; box-shadow: 0 1px 3px rgba(45,55,40,0.04); display: flex; flex-direction: column; position: relative; }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(45,55,40,0.12); border-color: var(--accent-soft); }
+
+        .status-stripe { height: 5px; }
+        .status-stripe.want_to_read       { background: var(--rose-soft); }
+        .status-stripe.currently_reading  { background: linear-gradient(90deg, var(--gold) 0%, var(--accent-soft) 100%); }
+        .status-stripe.finished           { background: var(--accent); }
+        .status-stripe.dnf                { background: var(--danger); opacity: 0.5; }
+        .status-stripe.paused             { background: var(--text-muted); }
+
+        .card-header { padding: 1.1rem 1.25rem 0.5rem; }
+        .title-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.3rem; }
+        .book-title { font-size: 1.15rem; font-weight: 700; color: var(--ink); letter-spacing: -0.3px; font-family: 'Georgia', serif; line-height: 1.25; }
+        .book-title a { color: var(--ink); }
+        .book-title a:hover { color: var(--accent); }
+        .author-line { font-size: 0.85rem; color: var(--accent); font-weight: 600; font-style: italic; margin-top: 0.15rem; }
+        .series-line { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.1rem; font-style: italic; }
+
+        .stars { display: inline-flex; gap: 0.1rem; font-size: 0.85rem; }
+        .star-filled { color: var(--gold); }
+        .star-empty { color: var(--border); }
+
+        .corner-flags { position: absolute; top: 0.6rem; right: 0.6rem; display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-end; }
+        .flag { display: inline-block; padding: 0.18rem 0.5rem; border-radius: 3px; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; }
+        .flag-challenge { background: rgba(184,148,106,0.15); color: var(--gold); border: 1px solid rgba(184,148,106,0.3); }
+        .flag-rereadable { background: rgba(184,138,138,0.15); color: var(--rose); border: 1px solid rgba(184,138,138,0.35); }
+
+        .card-body { padding: 0.5rem 1.25rem 1rem; flex: 1; display: flex; flex-direction: column; gap: 0.65rem; }
+
+        .badges-row { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+        .badge { display: inline-block; padding: 0.22rem 0.6rem; border-radius: 3px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.3px; text-transform: capitalize; }
+        .badge-status { font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+        .badge-status-want_to_read       { background: rgba(217,179,179,0.2); color: var(--rose); border: 1px solid rgba(184,138,138,0.4); }
+        .badge-status-currently_reading  { background: rgba(184,148,106,0.15); color: var(--gold); border: 1px solid rgba(184,148,106,0.4); }
+        .badge-status-finished           { background: rgba(93,112,82,0.12); color: var(--accent); border: 1px solid rgba(93,112,82,0.3); }
+        .badge-status-dnf                { background: rgba(168,50,50,0.08); color: var(--danger); border: 1px solid rgba(168,50,50,0.25); }
+        .badge-status-paused             { background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); }
+        .badge-genre { background: rgba(93,112,82,0.08); color: var(--accent); border: 1px solid rgba(93,112,82,0.2); }
+        .badge-format { background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); }
+
+        .progress-row { padding: 0.6rem 0.8rem; background: var(--surface-2); border-radius: 4px; display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.78rem; }
+        .progress-info { display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); font-weight: 600; }
+        .progress-percent { color: var(--accent); font-weight: 800; }
+        .progress-bar { height: 5px; background: var(--surface); border-radius: 3px; overflow: hidden; border: 1px solid var(--border); }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent-soft) 0%, var(--accent) 100%); border-radius: 3px; transition: width 0.3s; }
+
+        .mood-line { font-size: 0.78rem; color: var(--text-muted); font-style: italic; padding: 0.4rem 0.6rem; background: var(--surface-2); border-left: 3px solid var(--rose-soft); border-radius: 0 4px 4px 0; }
+
+        .quote-snippet { font-size: 0.8rem; color: var(--ink); padding: 0.5rem 0.75rem; font-style: italic; background: linear-gradient(135deg, rgba(184,148,106,0.06) 0%, transparent 100%); border-left: 3px solid var(--gold); font-family: 'Georgia', serif; border-radius: 0 4px 4px 0; line-height: 1.4; }
+        .quote-snippet::before { content: '" '; color: var(--gold); font-weight: 700; }
+        .quote-snippet::after { content: ' "'; color: var(--gold); font-weight: 700; }
+
+        .card-footer { display: flex; gap: 0.5rem; padding: 0.65rem 1.25rem; border-top: 1px solid var(--border); background: var(--surface-2); }
+
+        .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-muted); }
+        .empty-state h3 { color: var(--ink); font-size: 1.2rem; margin-bottom: 0.5rem; font-family: 'Georgia', serif; }
+        .alert-success { padding: 0.85rem 1rem; border-radius: 4px; margin-bottom: 1.25rem; font-size: 0.9rem; background: rgba(93,112,82,0.08); border: 1px solid rgba(93,112,82,0.25); color: var(--success); font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <a class="navbar-brand" th:href="@{/books}">
+        <span class="brand-icon"><svg viewBox="0 0 24 24"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg></span>
+        <span><span class="accent">Book</span>Nook</span>
+    </a>
+    <ul class="navbar-nav">
+        <li sec:authorize="hasRole('ADMIN')"><a th:href="@{/books/new}">+ Add Book</a></li>
+        <li><a href="/swagger-ui.html" target="_blank">API Docs</a></li>
+        <li><span class="user-badge" sec:authentication="name">user</span></li>
+        <li>
+            <form th:action="@{/auth/logout}" method="post" style="display:inline">
+                <button type="submit" class="btn btn-outline btn-sm">Logout</button>
+            </form>
+        </li>
+    </ul>
+</nav>
+
+<div class="main">
+    <div th:if="${successMessage}" class="alert-success" th:text="${successMessage}"></div>
+
+    <div class="page-header">
+        <h1 class="page-title">My <span class="accent">Library</span></h1>
+        <span class="user-badge" th:text="${books.size()} + ' books'"></span>
+    </div>
+
+    <form class="search-bar" th:action="@{/books}" method="get">
+        <div class="sg" style="flex:2; min-width:200px;">
+            <label>Title / Author / Series</label>
+            <input class="form-control" type="text" name="query" th:value="${query}" placeholder="e.g. Evelyn Hugo, Sarah J. Maas...">
+        </div>
+        <div class="sg">
+            <label>Genre</label>
+            <select class="form-select" name="genre">
+                <option value="">All genres</option>
+                <option th:each="g : ${genres}" th:value="${g}"
+                        th:text="${#strings.replace(g.name(),'_',' ')}"
+                        th:selected="${selectedGenre == g}"></option>
+            </select>
+        </div>
+        <div class="sg">
+            <label>Format</label>
+            <select class="form-select" name="format">
+                <option value="">All formats</option>
+                <option th:each="f : ${formats}" th:value="${f}"
+                        th:text="${#strings.replace(f.name(),'_',' ')}"
+                        th:selected="${selectedFormat == f}"></option>
+            </select>
+        </div>
+        <div class="sg">
+            <label>Status</label>
+            <select class="form-select" name="status">
+                <option value="">All statuses</option>
+                <option th:each="s : ${statuses}" th:value="${s}"
+                        th:text="${#strings.replace(s.name(),'_',' ')}"
+                        th:selected="${selectedStatus == s}"></option>
+            </select>
+        </div>
+        <div style="display:flex; gap:0.5rem; align-items:flex-end;">
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a th:href="@{/books}" class="btn btn-outline">Clear</a>
+        </div>
+    </form>
+
+    <div th:if="${books.isEmpty()}" class="empty-state">
+        <h3>No books yet</h3>
+        <p>Add your first book to start building your library.</p>
+    </div>
+
+    <div class="grid" th:unless="${books.isEmpty()}">
+        <div class="card" th:each="book : ${books}">
+            <div class="status-stripe" th:classappend="${#strings.toLowerCase(book.status.name())}"></div>
+
+            <div class="corner-flags">
+                <span class="flag flag-challenge" th:if="${book.partOfChallenge}">📚 Challenge</span>
+                <span class="flag flag-rereadable" th:if="${book.reReadable}">♡ Re-read</span>
+            </div>
+
+            <div class="card-header">
+                <div class="title-row">
+                    <div style="flex: 1; min-width: 0;">
+                        <div class="book-title">
+                            <a th:href="@{/books/{id}(id=${book.id})}" th:text="${book.title}"></a>
+                        </div>
+                        <div class="author-line" th:text="'by ' + ${book.author}"></div>
+                        <div class="series-line"
+                             th:if="${book.seriesName != null and !book.seriesName.isBlank()}">
+                            <span th:text="${book.seriesName}"></span>
+                            <span th:if="${book.seriesNumber != null}" th:text="' #' + ${book.seriesNumber}"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <div class="badges-row">
+                    <span class="badge badge-status"
+                          th:classappend="'badge-status-' + ${#strings.toLowerCase(book.status.name())}"
+                          th:text="${#strings.replace(book.status.name(),'_',' ')}"></span>
+                    <span class="badge badge-genre"
+                          th:text="${#strings.replace(book.genre.name(),'_',' ')}"></span>
+                    <span class="badge badge-format"
+                          th:text="${#strings.replace(book.format.name(),'_',' ')}"></span>
+                </div>
+
+                <div class="stars" th:if="${book.rating != null}">
+                    <span th:each="i : ${#numbers.sequence(1,5)}"
+                          th:classappend="${i <= book.rating} ? 'star-filled' : 'star-empty'"
+                          th:text="${i <= book.rating} ? '★' : '☆'"></span>
+                </div>
+
+                <div class="progress-row"
+                     th:if="${book.status.name() == 'CURRENTLY_READING' and book.pageCount != null and book.currentPage != null}"
+                     th:with="percent=${(book.currentPage * 100) / book.pageCount}">
+                    <div class="progress-info">
+                        <span th:text="'Page ' + ${book.currentPage} + ' / ' + ${book.pageCount}"></span>
+                        <span class="progress-percent" th:text="${percent} + '%'"></span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" th:style="'width:' + ${percent} + '%'"></div>
+                    </div>
+                </div>
+
+                <div class="mood-line" th:if="${book.moodAtmosphere != null and !book.moodAtmosphere.isBlank()}"
+                     th:text="${book.moodAtmosphere}"></div>
+
+                <div class="quote-snippet"
+                     th:if="${book.favoriteQuote != null and !book.favoriteQuote.isBlank()}"
+                     th:text="${#strings.length(book.favoriteQuote) > 110 ? #strings.substring(book.favoriteQuote, 0, 110) + '...' : book.favoriteQuote}"></div>
+            </div>
+
+            <div class="card-footer" sec:authorize="hasRole('ADMIN')">
+                <a th:href="@{/books/edit/{id}(id=${book.id})}" class="btn btn-outline btn-sm">Edit</a>
+                <form th:action="@{/books/delete/{id}(id=${book.id})}" method="post"
+                      onsubmit="return confirm('Remove this book?')">
+                    <button type="submit" class="btn-danger-sm">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
