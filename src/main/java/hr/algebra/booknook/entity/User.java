@@ -1,7 +1,7 @@
 package hr.algebra.booknook.entity;
 
-import hr.algebra.booknook.enums.Role;
 import jakarta.persistence.*;
+import hr.algebra.booknook.enums.Role;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

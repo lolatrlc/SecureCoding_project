@@ -1,11 +1,11 @@
 package hr.algebra.booknook.dto;
 
+import jakarta.validation.constraints.*;
 import hr.algebra.booknook.entity.Book;
 import hr.algebra.booknook.enums.BookFormat;
 import hr.algebra.booknook.enums.BookGenre;
 import hr.algebra.booknook.enums.ReadingStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

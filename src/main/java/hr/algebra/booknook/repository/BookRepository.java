@@ -30,4 +30,6 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     );
 
     List<Book> findAllByOrderByStatusAscAuthorAscTitleAsc();
+
+    boolean existsByTitle(String title);
 }

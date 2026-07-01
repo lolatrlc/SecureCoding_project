@@ -1,5 +1,6 @@
 package hr.algebra.booknook.controller.rest;
 
+import org.springframework.web.bind.annotation.*;
 import hr.algebra.booknook.dto.BookDto;
 import hr.algebra.booknook.entity.User;
 import hr.algebra.booknook.enums.BookFormat;
@@ -14,10 +15,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+
+import hr.algebra.booknook.security.SafeUrlValidator;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/api/books")
@@ -26,9 +29,11 @@ import java.util.NoSuchElementException;
 public class BookRestController {
 
     private final BookService bookService;
+    private final SafeUrlValidator safeUrlValidator;
 
-    public BookRestController(BookService bookService) {
+    public BookRestController(BookService bookService, SafeUrlValidator safeUrlValidator) {
         this.bookService = bookService;
+        this.safeUrlValidator = safeUrlValidator;
     }
 
     @GetMapping
@@ -42,7 +47,7 @@ public class BookRestController {
     public ResponseEntity<BookDto> getById(@PathVariable Long id) {
         try {
             return ResponseEntity.ok(bookService.findById(id));
-        } catch (NoSuchElementException e) {
+        } catch (NoSuchElementException _) {
             return ResponseEntity.notFound().build();
         }
     }
@@ -77,7 +82,7 @@ public class BookRestController {
     ) {
         try {
             return ResponseEntity.ok(bookService.update(id, dto));
-        } catch (NoSuchElementException e) {
+        } catch (NoSuchElementException _) {
             return ResponseEntity.notFound().build();
         }
     }
@@ -89,8 +94,26 @@ public class BookRestController {
         try {
             bookService.delete(id);
             return ResponseEntity.noContent().build();
-        } catch (NoSuchElementException e) {
+        } catch (NoSuchElementException _) {
             return ResponseEntity.notFound().build();
+        }
+    }
+
+
+    // VULNERABLE endpoint
+    @GetMapping("/preview-vulnerable")
+    public ResponseEntity<String> previewVulnerable(@RequestParam String url) {
+        return ResponseEntity.ok("Fetching URL: " + url);
+    }
+
+    // SECURE endpoint
+    @GetMapping("/preview-secure")
+    public ResponseEntity<String> previewSecure(@RequestParam String url) {
+        try {
+            safeUrlValidator.validateOrThrow(url);
+            return ResponseEntity.ok("URL is safe: " + url);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(400).body("Blocked: " + ex.getMessage());
         }
     }
 }

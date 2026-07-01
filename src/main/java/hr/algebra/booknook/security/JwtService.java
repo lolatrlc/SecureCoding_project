@@ -41,7 +41,7 @@ public class JwtService {
     public String extractUsername(String token) {
         try {
             return decode(token).getSubject();
-        } catch (JWTVerificationException e) {
+        } catch (JWTVerificationException _) {
             return null;
         }
     }
@@ -57,7 +57,7 @@ public class JwtService {
         try {
             Date expiresAt = decode(token).getExpiresAt();
             return expiresAt == null || expiresAt.before(new Date());
-        } catch (JWTVerificationException e) {
+        } catch (JWTVerificationException _) {
             return true;
         }
     }

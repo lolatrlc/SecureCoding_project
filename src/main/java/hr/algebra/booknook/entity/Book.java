@@ -1,10 +1,10 @@
 package hr.algebra.booknook.entity;
 
+import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import hr.algebra.booknook.enums.BookFormat;
 import hr.algebra.booknook.enums.BookGenre;
 import hr.algebra.booknook.enums.ReadingStatus;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

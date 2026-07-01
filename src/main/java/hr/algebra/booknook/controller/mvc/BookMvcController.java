@@ -1,5 +1,6 @@
 package hr.algebra.booknook.controller.mvc;
 
+import org.springframework.web.bind.annotation.*;
 import hr.algebra.booknook.dto.BookDto;
 import hr.algebra.booknook.entity.User;
 import hr.algebra.booknook.enums.BookFormat;
@@ -12,7 +13,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.NoSuchElementException;
@@ -22,6 +22,14 @@ import java.util.NoSuchElementException;
 public class BookMvcController {
 
     private final BookService bookService;
+
+    private static final String GENRES = "genres";
+    private static final String FORMATS = "formats";
+    private static final String STATUSES = "statuses";
+    private static final String REDIRECT_BOOKS = "redirect:/books";
+    private static final String EDIT_MODE = "editMode";
+    private static final String BOOK_FORM = "books/form";
+    private static final String SUCCESS_MESSAGE = "successMessage";
 
     public BookMvcController(BookService bookService) {
         this.bookService = bookService;
@@ -39,9 +47,9 @@ public class BookMvcController {
         model.addAttribute("books", searching
             ? bookService.search(query, genre, format, status)
             : bookService.findAll());
-        model.addAttribute("genres", BookGenre.values());
-        model.addAttribute("formats", BookFormat.values());
-        model.addAttribute("statuses", ReadingStatus.values());
+        model.addAttribute(GENRES, BookGenre.values());
+        model.addAttribute(FORMATS, BookFormat.values());
+        model.addAttribute(STATUSES, ReadingStatus.values());
         model.addAttribute("query", query);
         model.addAttribute("selectedGenre", genre);
         model.addAttribute("selectedFormat", format);
@@ -54,8 +62,8 @@ public class BookMvcController {
         try {
             model.addAttribute("book", bookService.findById(id));
             return "books/detail";
-        } catch (NoSuchElementException e) {
-            return "redirect:/books";
+        } catch (NoSuchElementException _) {
+            return REDIRECT_BOOKS;
         }
     }
 
@@ -64,15 +72,15 @@ public class BookMvcController {
     public String newForm(Model model) {
         model.addAttribute("book", new BookDto(
             null, "", "", "", null, "", null, "",
-            null, null, null, null, null, null,
+                BookGenre.FANTASY, BookFormat.HARDCOVER, ReadingStatus.DNF, null, null, null,
             true, false, false, null, null, null,
             "", "", "", "", "", null, null, null
         ));
-        model.addAttribute("genres", BookGenre.values());
-        model.addAttribute("formats", BookFormat.values());
-        model.addAttribute("statuses", ReadingStatus.values());
-        model.addAttribute("editMode", false);
-        return "books/form";
+        model.addAttribute(GENRES, BookGenre.values());
+        model.addAttribute(FORMATS, BookFormat.values());
+        model.addAttribute(STATUSES, ReadingStatus.values());
+        model.addAttribute(EDIT_MODE, false);
+        return BOOK_FORM;
     }
 
     @PostMapping("/new")
@@ -85,15 +93,15 @@ public class BookMvcController {
         RedirectAttributes redirectAttributes
     ) {
         if (result.hasErrors()) {
-            model.addAttribute("genres", BookGenre.values());
-            model.addAttribute("formats", BookFormat.values());
-            model.addAttribute("statuses", ReadingStatus.values());
-            model.addAttribute("editMode", false);
-            return "books/form";
+            model.addAttribute(GENRES, BookGenre.values());
+            model.addAttribute(FORMATS, BookFormat.values());
+            model.addAttribute(STATUSES, ReadingStatus.values());
+            model.addAttribute(EDIT_MODE, false);
+            return BOOK_FORM;
         }
         bookService.create(dto, currentUser);
-        redirectAttributes.addFlashAttribute("successMessage", "Book added to your library.");
-        return "redirect:/books";
+        redirectAttributes.addFlashAttribute(SUCCESS_MESSAGE, "Book added to your library.");
+        return REDIRECT_BOOKS;
     }
 
     @GetMapping("/edit/{id}")
@@ -101,13 +109,13 @@ public class BookMvcController {
     public String editForm(@PathVariable Long id, Model model) {
         try {
             model.addAttribute("book", bookService.findById(id));
-            model.addAttribute("genres", BookGenre.values());
-            model.addAttribute("formats", BookFormat.values());
-            model.addAttribute("statuses", ReadingStatus.values());
-            model.addAttribute("editMode", true);
-            return "books/form";
-        } catch (NoSuchElementException e) {
-            return "redirect:/books";
+            model.addAttribute(GENRES, BookGenre.values());
+            model.addAttribute(FORMATS, BookFormat.values());
+            model.addAttribute(STATUSES, ReadingStatus.values());
+            model.addAttribute(EDIT_MODE, true);
+            return BOOK_FORM;
+        } catch (NoSuchElementException _) {
+            return REDIRECT_BOOKS;
         }
     }
 
@@ -121,22 +129,22 @@ public class BookMvcController {
         RedirectAttributes redirectAttributes
     ) {
         if (result.hasErrors()) {
-            model.addAttribute("genres", BookGenre.values());
-            model.addAttribute("formats", BookFormat.values());
-            model.addAttribute("statuses", ReadingStatus.values());
-            model.addAttribute("editMode", true);
-            return "books/form";
+            model.addAttribute(GENRES, BookGenre.values());
+            model.addAttribute(FORMATS, BookFormat.values());
+            model.addAttribute(STATUSES, ReadingStatus.values());
+            model.addAttribute(EDIT_MODE, true);
+            return BOOK_FORM;
         }
         bookService.update(id, dto);
-        redirectAttributes.addFlashAttribute("successMessage", "Book updated.");
-        return "redirect:/books";
+        redirectAttributes.addFlashAttribute(SUCCESS_MESSAGE, "Book updated.");
+        return REDIRECT_BOOKS;
     }
 
     @PostMapping("/delete/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public String delete(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         bookService.delete(id);
-        redirectAttributes.addFlashAttribute("successMessage", "Book removed.");
-        return "redirect:/books";
+        redirectAttributes.addFlashAttribute(SUCCESS_MESSAGE, "Book removed.");
+        return REDIRECT_BOOKS;
     }
 }

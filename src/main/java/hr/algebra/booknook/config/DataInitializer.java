@@ -12,6 +12,7 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.time.LocalDate;
 
@@ -21,6 +22,12 @@ public class DataInitializer implements ApplicationRunner {
     private final UserRepository userRepository;
     private final BookRepository bookRepository;
     private final PasswordEncoder passwordEncoder;
+
+    @Value("${app.init.admin-password}")
+    private String adminPassword;
+
+    @Value("${app.init.user-password}")
+    private String userPassword;
 
     public DataInitializer(
         UserRepository userRepository,
@@ -39,14 +46,14 @@ public class DataInitializer implements ApplicationRunner {
         User admin = new User();
         admin.setUsername("admin");
         admin.setEmail("admin@booknook.hr");
-        admin.setPassword(passwordEncoder.encode("admin123"));
+        admin.setPassword(passwordEncoder.encode(adminPassword));
         admin.setRole(Role.ADMIN);
         admin = userRepository.save(admin);
 
         User user = new User();
         user.setUsername("user");
         user.setEmail("user@booknook.hr");
-        user.setPassword(passwordEncoder.encode("user123"));
+        user.setPassword(passwordEncoder.encode(userPassword));
         user.setRole(Role.USER);
         userRepository.save(user);
 
